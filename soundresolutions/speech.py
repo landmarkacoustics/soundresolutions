@@ -35,7 +35,7 @@ from collections import OrderedDict
 
 # for j, k in enumerate(speknames):
 #     print('\n/' + k + '/')
-    
+
 #     x = speks[k]
 #     n = len(x)
 #     if n < nmin:
@@ -111,7 +111,7 @@ from collections import OrderedDict
 # plt.legend(loc='best')
 # plt.show()
 
-#proabably better
+# proabably better
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -121,17 +121,19 @@ import soundresolutions as sres
 
 n_offsets = 50
 
-phonemes = ['s','p','e','k','t','er','g','r','a','m']
+specparts = {}
+phonemes = ['s', 'p', 'e', 'k', 't', 'er', 'g', 'r', 'a', 'm']
 path = '/home/ben/Documents/Sounds/soundresolutions/'
 base = 'spec'
 suff = '.wav'
-for i,k in enumerate(phonemes):
+for i, k in enumerate(phonemes):
     fn = path + base + str(i) + suff
     specparts[k] = Sound(fn).read_frames()
 
 specparts['full'] = Sound(path + 'spectrogram' + suff).read_frames()
 
-fft_sizes = 2**np.arange(6,12)
+machines = {}
+fft_sizes = 2**np.arange(6, 12)
 for fft_size in fft_sizes:
     machines[fft_size] = sres.SpectrogramMachine(signal.hamming(fft_size))
 
@@ -139,30 +141,29 @@ specmieds = OrderedDict()
 
 print('\n')
 dims = (len(fft_sizes), n_offsets)
-O = np.tile(0,dims)
+Oh = np.tile(0, dims)
 for i, fft_size in enumerate(fft_sizes):
-    O[i,:] = np.linspace(1,fft_size,n_offsets,False,dtype=int)
+    Oh[i, :] = np.linspace(1, fft_size, n_offsets, False, dtype=int)
 
 for phone, wave in specparts.items():
-    specmieds[phone] = np.tile(np.nan,dims)
-    B = np.tile(0.0, [len(wave),n_offsets])
+    specmieds[phone] = np.tile(np.nan, dims)
+    B = np.tile(0.0, [len(wave), n_offsets])
     print(phone)
     for i, (fft_size, SM) in enumerate(machines.items()):
-        specmieds[phone][i,:] = mieds(SM(wave,1), O[i,:], B)
+        specmieds[phone][i, :] = mieds(SM(wave, 1), Oh[i, :], B)
         print(fft_size)
 
 for j, (phone, M) in enumerate(specmieds.items()):
-    plt.subplot(3,4,j+1) and None
+    plt.subplot(3, 4, j+1) and None
     rms = np.sqrt(np.nanmean(np.square(specparts[phone])))
     for i, fft_size in enumerate(fft_sizes):
-        plt.plot(100*(1-O[i,:]/fft_size), M[i,:]/rms) and None
-    
+        plt.plot(100 * (1 - Oh[i, :] / fft_size), M[i, :] / rms) and None
+
     plt.title(phone) and None
 
-plt.subplot(3,4,12) and None
+plt.subplot(3, 4, 12) and None
 for i, fft_size in enumerate(fft_sizes):
-    plt.plot(0,0, label = fft_size) and None
+    plt.plot(0, 0, label = fft_size) and None
 
-plt.legend(loc='lower left',title='FFT size') and None
+plt.legend(loc='lower left', title='FFT size') and None
 plt.show()
-o
