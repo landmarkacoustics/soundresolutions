@@ -2,12 +2,13 @@
 
 import numpy as np
 from scipy import signal
-from .helpers import pSNR_from_dbSNR, rms
+from . import pSNR_from_dbSNR
+
 
 def dirac_comb(start: float,
                end: float,
                pulse_rate: float,
-               sample_rate: int)->np.ndarray:
+               sample_rate: int) -> np.ndarray:
     r"""A series of energy spikes at the specified rate.
 
     Each spike is a single sample with value 1. Their separation is determined
@@ -29,7 +30,7 @@ def dirac_comb(start: float,
     Returns
     -------
     comb : np.ndarray
-        A time series like a Dirac comb, except with positive and negative values at each spike.
+        A time series like a Dirac comb, but with + and - values at each spike.
 
     Examples
     --------
@@ -39,24 +40,28 @@ def dirac_comb(start: float,
     Notes
     -----
     It might be more pythonic to do:
-    [0 if x % sample_rate/pulse_rate else 1 for x in range(start*sample_rate,end*sample_rate)]
+    [0 if x % sample_rate/pulse_rate
+     else 1
+     for x in range(start*sample_rate, end*sample_rate)]
     but it's way the hell slower
 
     """
 
-    lo = int(min(start,end) * sample_rate)
+    lo = int(min(start, end) * sample_rate)
     step = int(sample_rate / pulse_rate)
     origin = (step - lo) % step
-    comb = np.zeros(int(np.ceil(np.abs(end - start) * sample_rate)), dtype = int)
+    comb = np.zeros(int(np.ceil(np.abs(end - start) * sample_rate)),
+                    dtype=int)
     comb[origin::step] = 1
     return comb
 
-def pulse_train(duration : float,
-                rate : float,
-                center_freq : float,
-                duty_cycle : float = 1/7,
-                snr : float = 20.0,
-                sample_rate : float = 44100.0) -> np.ndarray:
+
+def pulse_train(duration: float,
+                rate: float,
+                center_freq: float,
+                duty_cycle: float = 1/7,
+                snr: float = 20.0,
+                sample_rate: float = 44100.0) -> np.ndarray:
     r"""Creates a series of gaussian pulses like an echolocation buzz.
 
     Parameters
@@ -90,7 +95,7 @@ def pulse_train(duration : float,
     """
 
     npulses = int(duration * rate)
-    
+
     start_time = -0.5 * duration
     end_time = 0.5 * duration
     offset = end_time/npulses
@@ -100,14 +105,14 @@ def pulse_train(duration : float,
     wave = np.random.normal(0, pSNR_from_dbSNR(snr), len(times))
 
     pband = find_bandwidth(duty_cycle/rate, center_freq)
-    
+
     for t in np.linspace(start_time + offset,
                          end_time + offset,
                          npulses, False):
         wave += signal.gausspulse(t=times-t,
                                   fc=center_freq,
                                   bw=pband)
-    
+
     return wave
 
 
@@ -139,9 +144,5 @@ def find_bandwidth(duration: float,
     signal.gausspulse : the function that makes individual pulses
 
     """
-    
+
     return 1 / (0.71908948 * duration * center_freq)
-
-
-
-

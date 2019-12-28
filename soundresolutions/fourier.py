@@ -2,6 +2,8 @@
 r"""Classes for making spectra and spectrograms."""
 
 import numpy as np
+from scipy.fftpack import fft, ifft
+
 
 def dft_frequencies(Hz: float, fft_size: int) -> np.ndarray:
     r"""Calculates the frequency values of a DFT
@@ -21,8 +23,9 @@ def dft_frequencies(Hz: float, fft_size: int) -> np.ndarray:
         The lower bounds of each frequency bin, in [0, Nyquist]
 
     """
-    
-    return np.linspace(0,Hz/2,1+fft_size//2)
+
+    return np.linspace(0, Hz/2, 1+fft_size//2)
+
 
 def dft_quefrencies(Hz: float, fft_size: int) -> np.ndarray:
     r"""Calculates the quefrency values of a cepstrum
@@ -42,8 +45,9 @@ def dft_quefrencies(Hz: float, fft_size: int) -> np.ndarray:
         The center quefrencies, in the same units as `Hz`.
 
     """
-    
-    return Hz / np.arange(1,1+fft_size//2)
+
+    return Hz / np.arange(1, 1+fft_size//2)
+
 
 def full_cpk(spk: np.ndarray) -> np.ndarray:
     r"""Finds periodicity in a log-transformed power spectrum.
@@ -98,12 +102,12 @@ def full_cpk(spk: np.ndarray) -> np.ndarray:
         else:
             offset = (n - fft_size) // 2
             x = X[offset : offset + fft_size]
-        
+
         y = M(W * x)
         z = full_cpk(10*np.log10(y))[:len(y)]
         plt.plot(q,20*np.log10(abs(z)),label=D['fundamental'])
         plt.xlim([q[-1],2000.0])
-    
+
     plt.legend(loc='best',title='F0')
     plt.show()
     """
@@ -145,17 +149,17 @@ def lifter(spk: np.ndarray,
     TBD
 
     """
-    
+
     half_fft = len(spk)
 
     if mask is None:
         if cutoff is None or cutoff > half_fft:
-            e = ValueException('you must pass a mask or a valid cutoff')
+            e = ValueError('you must pass a mask or a valid cutoff')
             raise e
-        
+
         mask = np.repeat(1, 2*half_fft)
         mask[cutoff:-cutoff] = 0
-    
+
     return fft(full_cpk(spk)*mask).real[:half_fft]
 
 
@@ -209,21 +213,20 @@ class SpectrumMachine:
 
     """
 
-    def __init__(self, fft_size:int)->None:
+    def __init__(self, fft_size: int):
         self._fft_size = fft_size
         self._half_fft = fft_size // 2
 
-        self._slice = slice(1,self._half_fft)
-        self._cf_idx = [0,self._half_fft]
+        self._slice = slice(1, self._half_fft)
+        self._cf_idx = [0, self._half_fft]
 
         self._complex = np.zeros(self.spectrum_size(), dtype=complex)
         self._real = np.zeros(self.spectrum_size())
 
-
     def spectrum_size(self) -> int:
         return self._fft_size + 1
-    
-    def __call__(self, X:np.ndarray)->np.ndarray:
+
+    def __call__(self, X: np.ndarray) -> np.ndarray:
         r"""Calculates the DFT of the input.
 
         Note that the DFT doesn't actually care what the sample rate of
@@ -252,7 +255,7 @@ class SpectrumMachine:
         TBD
 
         """
-        
+
         if len(X) != self._fft_size:
             raise ValueError("wrong size input to SpectrumMachine")
 
@@ -262,8 +265,7 @@ class SpectrumMachine:
 
         return self._real
 
-
-    def fft_size(self)->np.float:
+    def fft_size(self) -> np.float:
         r"""The size of the DFT"
 
         Returns
@@ -277,11 +279,10 @@ class SpectrumMachine:
         16
 
         """
-        
+
         return self._fft_size
 
-    
-    def resolution(self, sample_rate:float)->float:
+    def resolution(self, sample_rate: float) -> float:
         r"""The frequency resolution of the DFT at the sample rate.
 
         Parameters
@@ -300,11 +301,10 @@ class SpectrumMachine:
         2756.25
 
         """
-        
+
         return sample_rate / self._fft_size
 
-    
-    def frequencies(self, sample_rate:float)->np.array:
+    def frequencies(self, sample_rate: float) -> np.array:
         r"""The lower bounds of the frequency bins of the DFT output.
 
         A DFT of length *n* will find the energy in *n/2* frequency
@@ -328,9 +328,8 @@ class SpectrumMachine:
         array([    0.   ,  1378.125,  2756.25 ,  4134.375, 0])
 
         """
-        
-        return dft_frequencies(sample_rate, self._fft_size)
 
+        return dft_frequencies(sample_rate, self._fft_size)
 
 
 class SpectrogramMachine:
@@ -355,12 +354,12 @@ class SpectrogramMachine:
     TBA
 
     """
-    
+
     def __init__(self, window_function: np.ndarray) -> None:
         self._spk = SpectrumMachine(len(window_function))
         self._W = window_function.copy()
         self._buffer = np.zeros(len(self._W))
-        
+
     def __call__(self,
                  X: np.ndarray,
                  step: int = None,
@@ -383,44 +382,40 @@ class SpectrogramMachine:
 
         """
         should_return = True
-        
+
         if Y is None:
             if step is None:
                 step = self._spk._half_fft
             Y = np.zeros([int(np.ceil(len(X)/step)), 1 + self._spk._half_fft])
             should_return = True
-        
+
         xlen = X.shape[0]
         ylen = Y.shape[0]
-        offset = self._spk._half_fft
-        
-        for i, x in enumerate(self.step_locations(xlen,ylen)):
+
+        for i, x in enumerate(self.step_locations(xlen, ylen)):
             start, lpads = self._left_indices(x)
             stop, rpads = self._right_indices(x, xlen)
             self._buffer[:lpads] = 0.0
             self._buffer[lpads:rpads] = X[start:stop]
             self._buffer[rpads:] = 0.0
-            Y[i,:] = self._spk(self._buffer * self._W)
-        
+            Y[i, :] = self._spk(self._buffer * self._W)
+
         return Y if should_return else None
 
-
-    def _left_indices(self, center:int)->tuple:
+    def _left_indices(self, center: int) -> tuple:
         leftmost = center - self._spk._half_fft
         if leftmost < 0:
             return (0, -leftmost)
         return (leftmost, 0)
 
-
-    def _right_indices(self, center:int, N:int)->tuple:
+    def _right_indices(self, center: int, N: int) -> tuple:
         rightmost = center + self._spk._half_fft
         if rightmost > N:
             return (N, self._spk.fft_size() - (rightmost - N))
         else:
             return (rightmost, self._spk.fft_size())
 
-
-    def step_locations(self, xlen:int, ylen:int)->np.ndarray:
+    def step_locations(self, xlen: int, ylen: int) -> np.ndarray:
         r"""Finds the indices of the windows that make a spectrogram.
 
         Parameters
@@ -436,7 +431,6 @@ class SpectrogramMachine:
             An array of indices into whatever has `xlen` items.
 
         """
-        
-        return np.array(np.around(np.linspace(0,xlen,ylen,False),0),dtype=int)
 
-
+        return np.array(np.around(np.linspace(0, xlen, ylen, False), 0),
+                        dtype=int)

@@ -2,10 +2,9 @@
 """ Functions for creating audio signal data."""
 
 import numpy as np
-from scipy import signal
-from typing import Iterable
 
-TAU = 2.0 * np.pi    
+
+TAU = 2.0 * np.pi
 
 
 def am_tone(time_vec: np.ndarray,
@@ -63,7 +62,7 @@ def gauss_am(time_vector: float,
              decay_degree: float = 2) -> np.ndarray:
     r"""find the decay rate parameter for a sound that decays to
     `epsilon` in `duration`
-    
+
     Parameters
     ----------
     duration : float
@@ -72,19 +71,19 @@ def gauss_am(time_vector: float,
         The value that the amplitude will decay to during `duration`
     degree : int, optional
         The power that the term is raised to.
-    
+
     Returns
     -------
     out : np.ndarray
         The decay rate parameter.
-    
+
     Examples
     --------
     This finds the decay rate to go from 1.0 to 2**-15 in 100 ms
-    
+
     >>> decay_rate(100)
     0.004158883083359672
-    
+
     """
 
     decay_rate = 2**decay_degree * np.log(decay_eps) / duration ** decay_degree
@@ -136,7 +135,7 @@ def times(duration: float = 1,
 
     """
 
-    return np.arange(duration, step = 1/sample_rate)
+    return np.arange(duration, step=1/sample_rate)
 
 
 def white_noise(*args, **kwargs) -> np.ndarray:
@@ -179,7 +178,7 @@ def white_noise(*args, **kwargs) -> np.ndarray:
     """
 
     n = 0
-    
+
     if kwargs:
         if 'n' in kwargs:
             n = int(kwargs['n'])
@@ -197,4 +196,4 @@ def white_noise(*args, **kwargs) -> np.ndarray:
 
     if n <= 0:
         raise ValueError('the result would have no samples!')
-    return np.random.normal(0,1,n)
+    return np.random.normal(0, 1, n)

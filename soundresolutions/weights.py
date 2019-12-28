@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.stats import pearsonr
 
+
 def coefficient_of_alienation(x: np.ndarray, y: np.ndarray) -> np.float:
     r"""Calculates 1 - R**2
 
@@ -21,6 +22,5 @@ def coefficient_of_alienation(x: np.ndarray, y: np.ndarray) -> np.float:
     numpy.corrcoef : can also calculate correlation coefficients
 
     """
-    
-    return 1 - pearsonr(x,y)[0]**2
 
+    return 1 - pearsonr(x, y)[0]**2

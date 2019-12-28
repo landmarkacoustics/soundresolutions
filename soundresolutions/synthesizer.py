@@ -1,8 +1,8 @@
 # Copyright (C) 2018 by Landmark Acoustics LLC
 
 import numpy as np
-from typing import Dict, Tuple
-from .spaceranger import SpaceRanger
+from . import SpaceRanger
+
 
 class Synthesizer(SpaceRanger):
     """Syntactic sugar for creating waveforms with a `SpaceRanger`
@@ -33,13 +33,12 @@ class Synthesizer(SpaceRanger):
     4410
     8820
     13230
-    
+
     """
-        
+
     def __init__(self, variables: dict, constants: dict) -> None:
         super().__init__(self.synthesize, constants, variables)
 
-    
     def times(duration: float, Hz: float) -> np.ndarray:
         """Array of times from [-duration/2,duration/2) with interval 1/Hz
 
@@ -59,14 +58,13 @@ class Synthesizer(SpaceRanger):
         --------
         >>> Synthesizer.times(0.5, 8)
         array([-0.25 , -0.125,  0.   ,  0.125])
-        
+
         """
-        
+
         return np.linspace(-duration/2,
-                           duration /2,
+                           duration/2,
                            int(duration*Hz),
                            False)
-    
 
     @classmethod
     def synthesize(cls, duration: float, Hz: float) -> np.ndarray:

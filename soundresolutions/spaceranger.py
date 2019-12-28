@@ -4,9 +4,10 @@ from inspect import getfullargspec
 from itertools import islice
 from typing import Any, Callable, Dict, Iterable, Set, Tuple
 
-def combined_things(**kwargs) -> Dict[Any,Any]:
+
+def combined_things(**kwargs) -> Dict[Any, Any]:
     """A generator over every combination of the supplied arguments.
-    
+
     Each value in `kwargs` should be an iterable. Builds a dict
     with every key in `kwargs` for each possible combination of the
     elements of each argument.
@@ -15,7 +16,7 @@ def combined_things(**kwargs) -> Dict[Any,Any]:
     ----------
     kwargs : dict
         Each member's value should be an iterable.
-        
+
         The values do not have to have the same length. If there is only
         one item for a key, it should still be passed as an iterable
         of some kind, rather than a scalar or other constant.
@@ -44,9 +45,9 @@ def combined_things(**kwargs) -> Dict[Any,Any]:
     2:    {'logical': False, 'letter': 'a', 'number': 4}
     3:    {'logical': True, 'letter': 'a', 'number': 3}
     4:    {'logical': True, 'letter': 'a', 'number': 1}
-    5:    {'logical': True, 'letter': 'a', 'number': 4}    
+    5:    {'logical': True, 'letter': 'a', 'number': 4}
     """
-    
+
     keys = list(kwargs.keys())
     N = len(keys)
     vals = kwargs.values()
@@ -54,15 +55,16 @@ def combined_things(**kwargs) -> Dict[Any,Any]:
     indices = [0] * N
     while indices[0] < counts[0]:
         D = dict()
-        for i,k,v in zip(indices, keys, vals):
-            tmp = next(islice(v,i,None))
-            D.update({k:tmp})
+        for i, k, v in zip(indices, keys, vals):
+            tmp = next(islice(v, i, None))
+            D.update({k: tmp})
         yield D
         indices[-1] += 1
         for i in range(N-1, 0, -1):
             if indices[i] == counts[i]:
                 indices[i-1] += 1
                 indices[i] = 0
+
 
 class SpaceRanger:
     """ A function to evaluate across a parameter space and the space itself
@@ -79,11 +81,10 @@ class SpaceRanger:
     Yields
     ------
     out : Tuple[Dict, Any]
-        A tuple with the specific variables passed to `function` and its result.
+        A tuple with the specific values passed to `function` and its result.
 
     Examples
     --------
-    >>> 
     >>> pi = [3, 1, 4]
     >>> b = {True, False}
     >>> foo = lambda t, b, x: str(b) + ':' + str(x) + t
@@ -99,7 +100,7 @@ class SpaceRanger:
     {'logical': True, 'letter': 'a', 'number': 4}	True:4a
 
     """
-    
+
     def __init__(self,
                  function: Callable,
                  static_parameters: dict,
@@ -110,12 +111,14 @@ class SpaceRanger:
         if missing:
             raise ValueError('missing arguments: {}'.format(missing))
         extras = actual_keys - self.required_args()
-        filt = lambda d : dict([(k,v) for k,v in d.items() if k not in extras])
+
+        def filt(d):
+            return dict([(k, v) for k, v in d.items() if k not in extras])
+
         self._static = filt(static_parameters)
         self._varying = filt(varied_parameters)
 
-    
-    def __iter__(self) -> Iterable[Tuple[dict,Any]]:
+    def __iter__(self) -> Iterable[Tuple[dict, Any]]:
         if self._varying:
             for D in combined_things(**self._varying):
                 D.update(self._static)
@@ -129,7 +132,7 @@ class SpaceRanger:
         for v in self._varying.values():
             p *= len(v)
         return p
-    
+
     def required_args(self) -> Set[str]:
         """Reports the names of the arguments to `function`
 
@@ -148,12 +151,12 @@ class SpaceRanger:
         {'t', 'b', 'x'}
 
         """
-        
+
         return set(getfullargspec(self._F).args) - {'self'}
-    
+
     def _update(self, D: Dict) -> None:
         """Override this to change state variables during iteration
-        
+
         Parameters
         ----------
         D : Dict
@@ -162,5 +165,5 @@ class SpaceRanger:
         Returns
         -------
         """
-        
+
         pass

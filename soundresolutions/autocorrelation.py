@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def autocorrelation(x: np.ndarray) -> np.ndarray:
     r'''Finds the autocorrelations of `x` with itself.
 
@@ -9,7 +10,7 @@ def autocorrelation(x: np.ndarray) -> np.ndarray:
     ----------
     x : np.ndarray
         Any data sample you want the autocorrelation of
-    
+
     Returns
     -------
     out : np.ndarray
@@ -30,19 +31,22 @@ def autocorrelation(x: np.ndarray) -> np.ndarray:
 
     '''
 
-    tmp = np.array(x,dtype=float)
+    tmp = np.array(x, dtype=float)
     tmp -= tmp.mean()
     n = len(x)
-    return (signal.correlate(tmp,tmp)[:n]/tmp.var()/n)
+    return (signal.correlate(tmp, tmp)[:n]/tmp.var()/n)
+
 
 if __name__ == '__main__':
-    
+
     import numpy as np
     from scipy import signal
     import soundresolutions as sr
-    
+
+    N = 512  # this should actually come from a run-time parameter.
+
     for w in sr.window_test.all_window_names:
-        x = signal.get_window(w,N)
+        x = signal.get_window(w, N)
         X = sr.autocorrelation(x)[N//2:]
         i = np.argmin(X**2)
         print(f'{w:^20}{i:>7}{100.0*(0.5+i/N):>7.2f}')

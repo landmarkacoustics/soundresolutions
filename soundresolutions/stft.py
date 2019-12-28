@@ -3,7 +3,8 @@
 import numpy as np
 from scipy import fftpack
 
-def stft(x : np.ndarray, b : np.ndarray=None) -> np.ndarray:
+
+def stft(x: np.ndarray, b: np.ndarray = None) -> np.ndarray:
     r'''The short-term Fourier transform of `x`, optionally stored in `b`.
 
     This function formats the output of a call to `scipy.fftpack.rfft`. The
@@ -33,7 +34,7 @@ def stft(x : np.ndarray, b : np.ndarray=None) -> np.ndarray:
     ------
     ValueError
         If `b` has an invalid length.
-    
+
     See Also
     --------
     scipy.fftpack.rfft : The function that calculates the Fourier transform.
@@ -61,18 +62,18 @@ def stft(x : np.ndarray, b : np.ndarray=None) -> np.ndarray:
     array([ 0.,  4.,  0.])
 
     '''
-    
+
     returnb = False
     real_length = 1 + len(x)//2
 
     if b is None:
-        b = np.zeros(real_length, dtype = complex)
+        b = np.zeros(real_length, dtype=complex)
         returnb = True
-        
+
     q = fftpack.rfft(x)
-    real_indices = slice(1,None,2)
-    imag_indices = slice(2,None,2)
-    
+    real_indices = slice(1, None, 2)
+    imag_indices = slice(2, None, 2)
+
     if b.dtype is np.dtype(float):
         if len(b) == len(x):
             b[:] = q
@@ -85,7 +86,7 @@ def stft(x : np.ndarray, b : np.ndarray=None) -> np.ndarray:
     elif b.dtype is np.dtype(complex):
         if len(b) != real_length:
             raise ValueError('what kind of weird buffer length is that?')
-        
+
         b[0] = q[0] + 0j
         b.real[1:] = q[real_indices]
         b.imag[1:-1] = q[imag_indices]
@@ -93,4 +94,3 @@ def stft(x : np.ndarray, b : np.ndarray=None) -> np.ndarray:
 
     if returnb:
         return b
-
