@@ -1,12 +1,12 @@
 # Copyright (C) 2018 by Landmark Acoustics LLC
-r"""Classes for making spectra and spectrograms."""
+r'''Classes for making spectra and spectrograms.'''
 
 import numpy as np
 from scipy.fftpack import fft, ifft
 
 
 def dft_frequencies(Hz: float, fft_size: int) -> np.ndarray:
-    r"""Calculates the frequency values of a DFT
+    r'''Calculates the frequency values of a DFT
 
     These are the lower bounds of the bins because that's easier.
 
@@ -22,13 +22,13 @@ def dft_frequencies(Hz: float, fft_size: int) -> np.ndarray:
     out : np.ndarray
         The lower bounds of each frequency bin, in [0, Nyquist]
 
-    """
+    '''
 
     return np.linspace(0, Hz/2, 1+fft_size//2)
 
 
 def dft_quefrencies(Hz: float, fft_size: int) -> np.ndarray:
-    r"""Calculates the quefrency values of a cepstrum
+    r'''Calculates the quefrency values of a cepstrum
 
     These are the centers of the bins because that's easier.
 
@@ -44,13 +44,13 @@ def dft_quefrencies(Hz: float, fft_size: int) -> np.ndarray:
     out : np.ndarray
         The center quefrencies, in the same units as `Hz`.
 
-    """
+    '''
 
     return Hz / np.arange(1, 1+fft_size//2)
 
 
 def full_cpk(spk: np.ndarray) -> np.ndarray:
-    r"""Finds periodicity in a log-transformed power spectrum.
+    r'''Finds periodicity in a log-transformed power spectrum.
 
     Good for extracting formants and fundamental frequency information.
 
@@ -77,13 +77,14 @@ def full_cpk(spk: np.ndarray) -> np.ndarray:
     import numpy as np
     from scipy import signal
     from matplotlib import pyplot as plt
-    from soundresolutions import full_cpk, Sawtooths, SpectrumMachine
+    from soundresolutions import \
+        full_cpk, Sawtooths, SpectrumMachine, dft_quefrencies
 
     duration = 0.1
     sample_rate = 44100.0
-    fzeros = np.linspace(100,600,6)
-    carey = Sawtooths(dict(fundamental = fzeros),
-                           dict(duration = duration,
+    fzeros = np.linspace(100, 600, 6)
+    carey = Sawtooths(dict(fundamental=fzeros),
+                           dict(duration=duration,
                                 Hz=sample_rate,
                                 decay_eps=1e-15,
                                 decay_degree=6))
@@ -93,32 +94,33 @@ def full_cpk(spk: np.ndarray) -> np.ndarray:
     x = np.zeros(fft_size)
     y = np.zeros(fft_size//2)
     z = y.copy()
-    q = sample_rate / np.arange(1,len(z)+1)
+    q = dft_frequencies(sample_rate, fft_size)
     for D, X in carey:
         n = len(X)
         if n < fft_size:
             offset = (fft_size - n) // 2
-            x[offset : offset + n] = X
+            x[offset: offset + n] = X
         else:
             offset = (n - fft_size) // 2
-            x = X[offset : offset + fft_size]
+            x = X[offset: offset + fft_size]
 
         y = M(W * x)
         z = full_cpk(10*np.log10(y))[:len(y)]
-        plt.plot(q,20*np.log10(abs(z)),label=D['fundamental'])
-        plt.xlim([q[-1],2000.0])
+        plt.plot(q, 20*np.log10(abs(z)), label=D['fundamental'])
+        plt.xlim([q[-1], 2000.0])
 
-    plt.legend(loc='best',title='F0')
+    plt.legend(loc='best', title='F0')
     plt.show()
-    """
+
+    '''
 
     return ifft(np.concatenate([spk, spk[-1:None:-1]]))
 
 
 def lifter(spk: np.ndarray,
            mask: np.ndarray = None,
-           cutoff: np.ndarray = None) -> np.ndarray:
-    r"""Finds filter parts of the source-filter process that made spk.
+           cutoff: int = None) -> np.ndarray:
+    r'''Finds filter parts of the source-filter process that made spk.
 
     The source of the process cannot have a fundamental frequency
     greater than the frequency that corresponds to `cutoff`.
@@ -148,7 +150,7 @@ def lifter(spk: np.ndarray,
     --------
     TBD
 
-    """
+    '''
 
     half_fft = len(spk)
 
@@ -163,8 +165,32 @@ def lifter(spk: np.ndarray,
     return fft(full_cpk(spk)*mask).real[:half_fft]
 
 
+def spectrum_power(spk: np.ndarray,
+                   denominator: float = None) -> np.ndarray:
+    r'''Convert a complex spectrum to a power spectrum.
+
+    Parameters
+    ----------
+    spk : np.ndarray
+        A complex-valued, 1-D output from a Fourier transform.
+    denominator : float, optional
+        A scaling factor, defaults to len(spk)
+
+    Returns
+    -------
+    out : np.ndarray
+        The square of the absolute value of the spectrum.
+
+    '''
+
+    if denominator is None:
+        denominator = len(spk)
+
+    return np.square(np.abs(spk)) / denominator
+
+
 def real_spk(x: np.ndarray) -> np.ndarray:
-    """Finds the power spectrum of real-valued inputs.
+    r'''Finds the power spectrum of real-valued inputs.
 
     Parameters
     ----------
@@ -190,13 +216,13 @@ def real_spk(x: np.ndarray) -> np.ndarray:
     >>> np.sqrt(real_spk(np.arange(128)).mean())
     73.467679968813499
 
-    """
+    '''
 
-    return np.square(np.abs(np.fft.rfft(x)))/len(x)
+    return spectrum_power(np.fft.rfft(x), len(x))
 
 
 class SpectrumMachine:
-    r"""Finds the power spectrum of one-dimensional inputs.
+    r'''Finds the power spectrum of one-dimensional inputs.
 
     Parameters
     ----------
@@ -211,7 +237,7 @@ class SpectrumMachine:
     --------
     TBD
 
-    """
+    '''
 
     def __init__(self, fft_size: int):
         self._fft_size = fft_size
@@ -227,7 +253,7 @@ class SpectrumMachine:
         return self._fft_size + 1
 
     def __call__(self, X: np.ndarray) -> np.ndarray:
-        r"""Calculates the DFT of the input.
+        r'''Calculates the DFT of the input.
 
         Note that the DFT doesn't actually care what the sample rate of
         `X` is, so that is not part of either the initialization or the
@@ -254,19 +280,19 @@ class SpectrumMachine:
         --------
         TBD
 
-        """
+        '''
 
         if len(X) != self._fft_size:
             raise ValueError("wrong size input to SpectrumMachine")
 
         self._complex[:] = np.fft.rfft(X)
 
-        self._real[:] = np.square(np.abs(self._complex)) / self._fft_size
+        self._real[:] = spectrum_power(self._complex, self._fft_size)
 
         return self._real
 
     def fft_size(self) -> np.float:
-        r"""The size of the DFT"
+        r'''The size of the DFT"
 
         Returns
         -------
@@ -278,12 +304,12 @@ class SpectrumMachine:
         >>> S.fft_size()
         16
 
-        """
+        '''
 
         return self._fft_size
 
     def resolution(self, sample_rate: float) -> float:
-        r"""The frequency resolution of the DFT at the sample rate.
+        r'''The frequency resolution of the DFT at the sample rate.
 
         Parameters
         ----------
@@ -300,12 +326,12 @@ class SpectrumMachine:
         >>> SpectrumMachine(16).resolution(44100)
         2756.25
 
-        """
+        '''
 
         return sample_rate / self._fft_size
 
     def frequencies(self, sample_rate: float) -> np.array:
-        r"""The lower bounds of the frequency bins of the DFT output.
+        r'''The lower bounds of the frequency bins of the DFT output.
 
         A DFT of length *n* will find the energy in *n/2* frequency
         ranges, or 'bins'. This function returns the lower boundary
@@ -327,13 +353,13 @@ class SpectrumMachine:
         >>> SpectrumMachine(8).frequencies(11025)
         array([    0.   ,  1378.125,  2756.25 ,  4134.375, 0])
 
-        """
+        '''
 
         return dft_frequencies(sample_rate, self._fft_size)
 
 
 class SpectrogramMachine:
-    r"""Contains buffers for reasonably rapid spectrogram computations.
+    r'''Contains buffers for reasonably rapid spectrogram computations.
 
     The idea of this class is to step through the input array and
     compute a spectrogram that has some zero-padding on the edges
@@ -353,7 +379,7 @@ class SpectrogramMachine:
     --------
     TBA
 
-    """
+    '''
 
     def __init__(self, window_function: np.ndarray) -> None:
         self._spk = SpectrumMachine(len(window_function))
@@ -364,14 +390,14 @@ class SpectrogramMachine:
                  X: np.ndarray,
                  step: int = None,
                  Y: np.ndarray = None) -> np.ndarray:
-        r"""Computes the spectrogram of the input.
+        r'''Computes the spectrogram of the input.
 
         Parameters
         ----------
         X : np.ndarray
             The input waveform. A 1-D, real-valued time series.
         step : int, optional
-            The number of samples between spectra.
+            The number of samples between spectra. Default gives a 50% overlap.
         Y : np.ndarray, optional
             An optional array to hold the output, if you want to.
 
@@ -380,7 +406,7 @@ class SpectrogramMachine:
         Y : np.ndarray
             A real-valued power spectrogram of `X`.
 
-        """
+        '''
         should_return = True
 
         if Y is None:
@@ -416,7 +442,7 @@ class SpectrogramMachine:
             return (rightmost, self._spk.fft_size())
 
     def step_locations(self, xlen: int, ylen: int) -> np.ndarray:
-        r"""Finds the indices of the windows that make a spectrogram.
+        r'''Finds the indices of the windows that make a spectrogram.
 
         Parameters
         ----------
@@ -430,7 +456,7 @@ class SpectrogramMachine:
         out : np.ndarray
             An array of indices into whatever has `xlen` items.
 
-        """
+        '''
 
         return np.array(np.around(np.linspace(0, xlen, ylen, False), 0),
                         dtype=int)
