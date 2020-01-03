@@ -90,7 +90,7 @@ class SpaceRanger:
     >>> foo = lambda t, b, x: str(b) + ':' + str(x) + t
     >>> buzz = SpaceRanger(foo, dict(t='a'), dict(b=b, x=pi))
     >>> for d,v in buzz:
-        print('{}\t{}'.format(d,v))
+        print(f'{d}\t{v}')
 
     {'logical': False, 'letter': 'a', 'number': 3}	False:3a
     {'logical': False, 'letter': 'a', 'number': 1}	False:1a
