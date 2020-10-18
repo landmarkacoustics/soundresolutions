@@ -45,7 +45,7 @@ class Whistles(Synthesizer):
     ... d = D['duration']
     ... r = rms(X)
     ... n = len(X)
-    ... print('duration = {:>.3}, RMS = {:<.5}, N = {:>5}'.format(d,r,n))
+    ... print(f'duration = {:>.3}, RMS = {:<.5}, N = {:>5}'.format(d,r,n))
 
     duration = 0.1, RMS = 0.32654, N =  4410
     duration = 0.2, RMS = 0.32654, N =  8820
@@ -89,7 +89,8 @@ class Whistles(Synthesizer):
 
         return self._center_slope
 
-    def polynomial_coefficients(center_frequency: float,
+    def polynomial_coefficients(cls,
+                                center_frequency: float,
                                 duration: float,
                                 bandwidth: float) -> np.ndarray:
         r"""Computes the coefficients of an S-shaped cubic polynomial.
