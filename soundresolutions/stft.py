@@ -41,7 +41,7 @@ def stft(x: np.ndarray, b: np.ndarray = None) -> np.ndarray:
 
     Notes
     -----
-    The outputs are not scaled in any way (just like the outputs to `rfft`).
+    The outputs are not scaled in any way (just like the outputs from `rfft`).
 
     Examples
     --------
