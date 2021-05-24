@@ -82,35 +82,35 @@ def pearson(X: np.ndarray, Y: np.ndarray) -> float:
 
 
 def proportions_from_snr(snr: np.float) -> tuple:
-    """calculates the proportional eneregy of signal and noise, given an SNR"""
+    r'''calculates the proportional eneregy of signal and noise, given an SNR'''
     k = snr / (1 + snr)
     return (k, 1-k)
 
 
 def pSNR_from_dbSNR(snr: np.float) -> float:
-    """A noise's proportional amplitude from its decibel signal-to-noise ratio.
+    r'''A noise's proportional amplitude from its decibel signal-to-noise ratio.
 
-    """
+    '''
 
     return 10**(-snr/10)
 
 
 def rms(x: np.ndarray) -> np.float:
-    """calculates the Root-Mean-Square of an array"""
+    r'''calculates the Root-Mean-Square of an array'''
     return np.sqrt(np.nanmean(np.square(x)))
 
 
 def scale_to_unit_energy(x: np.ndarray) -> np.ndarray:
-    """divides an array by the Root-Mean-Square of its values"""
+    r'''divides an array by the Root-Mean-Square of its values'''
     return x / rms(x)
 
 
 def whole_steps(start: int, stop: int, number: int) -> np.ndarray:
-    """interpolates up to number steps between start and stop.
+    r'''interpolates up to number steps between start and stop.
 
     Each step is an integer.
 
-    """
+    '''
 
     dif = abs(stop - start)
     if dif < number:
